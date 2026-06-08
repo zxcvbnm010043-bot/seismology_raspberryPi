@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震學樹莓派專案 - Seismology Raspberry Pi Project</title>
+    <style>
+        :root {
+            --primary-color: #2b4c7e;
+            --secondary-color: #4a7bb0;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --border-color: #dddddd;
+            --accent-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 24pt;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 11pt;
+            opacity: 0.9;
+        }
+
+        /* Tabs 導覽列 */
+        .tabs-nav {
+            display: flex;
+            background-color: #e9ecef;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 12pt;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            text-align: center;
+            outline: none;
+        }
+
+        .tab-btn:hover {
+            background-color: rgba(0,0,0,0.03);
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: -2px;
+        }
+
+        /* 內容區塊 */
+        .tabs-content {
+            padding: 30px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 內文樣式 */
+        h2 {
+            color: var(--primary-color);
+            font-size: 16pt;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            font-size: 13pt;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            font-size: 11pt;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .alert-box {
+            background-color: #fff5f5;
+            border-left: 4px solid var(--accent-color);
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 10.5pt;
+        }
+
+        /* 圖片與影片網格佈局 */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1-flex));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        /* 當項目多時自動調整為兩列或四列 */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 25px;
+        }
+
+        .media-card {
+            background-color: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .media-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 6px;
+            background-color: #eaeaea;
+            transition: transform 0.3s ease;
+        }
+
+        .media-card img:hover {
+            transform: scale(1.02);
+        }
+
+        .media-card video {
+            width: 100%;
+            height: 220px;
+            background-color: #000;
+            border-radius: 6px;
+        }
+
+        .media-label {
+            margin-top: 10px;
+            font-size: 10.5pt;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .media-desc {
+            font-size: 9.5pt;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* RWD 響應式調整 */
+        @media (max-width: 768px) {
+            .tabs-nav {
+                flex-direction: column;
+            }
+            .tab-btn {
+                border-bottom: 1px solid var(--border-color);
+            }
+            .tab-btn.active {
+                border-bottom: none;
+                border-left: 4px solid var(--primary-color);
+            }
+            .tabs-content {
+                padding: 15px;
+            }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Seismology Raspberry Pi Project</h1>
+        <p>基於樹莓派之地震學監測與物聯網邊緣運算預警系統</p>
+    </header>
+
+    <nav class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'process')">使用過程</button>
+        <button class="tab-btn" onclick="switchTab(event, 'results')">結果圖片</button>
+        <button class="tab-btn" onclick="switchTab(event, 'videos')">影片結果</button>
+    </nav>
+
+    <div class="tabs-content">
+        
+        <div id="process" class="tab-panel active">
+            <h2>實作過程說明</h2>
+            
+            <h3>一、網路連線與無線操作</h3>
+            <p>MobaXterm 中的 SSH 可以連接網路，利用 Raspberry Pi 的 USB 接頭連接手機網路後，即可進行遠端無線操作，免去外接螢幕與鍵盤的繁瑣設定。</p>
+            
+            <h3>二、硬體接線架構</h3>
+            <p>電路板與麵包板的接線方式如下：電路板連接電源輸出（VCC）和接地線（GND，以避免硬體燒焦毀損）；電路板上搭載的感測器負責感應<strong>三軸加速度</strong>，並即時將感測訊息傳遞給 Raspberry Pi。麵包板端則連接了 LED 燈與蜂鳴器，當檢測器感應到劇烈晃動時，訊息傳遞至 Raspberry Pi 進行運算，再將感應結果輸出至 LED 燈與蜂鳴器，實作出類似地震發出警報的功能。</p>
+
+            <div class="grid-4">
+                <div class="media-card">
+                    <img src="tools/107371_0.jpg" alt="接線圖片一" onerror="this.src='https://via.placeholder.com/400x300?text=tools/107371_0.jpg'">
+                    <div class="media-label">接線圖片一</div>
+                    <div class="media-desc">SSH 控制端環境設定</div>
+                </div>
+                <div class="media-card">
+                    <img src="tools/107372_0.jpg" alt="接線圖片二" onerror="this.src='https://via.placeholder.com/400x300?text=tools/107372_0.jpg'">
+                    <div class="media-label">接線圖片二</div>
+                    <div class="media-desc">樹莓派引腳接線</div>
+                </div>
+                <div class="media-card">
+                    <img src="tools/107373_0.jpg" alt="接線圖片三" onerror="this.src='https://via.placeholder.com/400x300?text=tools/107373_0.jpg'">
+                    <div class="media-label">接線圖片三</div>
+                    <div class="media-desc">感測器與麵包板佈線</div>
+                </div>
+                <div class="media-card">
+                    <img src="tools/107376.jpg" alt="接線圖片四" onerror="this.src='https://via.placeholder.com/400x300?text=tools/107376.jpg'">
+                    <div class="media-label">接線圖片四</div>
+                    <div class="media-desc">警報蜂鳴器模組</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results" class="tab-panel">
+            <h2>監測與數據結果</h2>
+            <p>本系統與 MobaXterm 及自動化腳本結合，具備連接 Discord 的即時通報功能。利用此特性，使用 Python 撰寫即時警報通知程式，當晃動觸發門檻時能即時傳送警告訊息至 Discord 頻道，並自動上傳視覺化繪圖。</p>
+            
+            <div class="alert-box">
+                <strong>物聯網邊緣運算預警系統：</strong> 能夠在特定時間內即時捕捉晃動資訊，判定最大合成加速度的合力方向，並具備精確監測與估算地震強度的能力。
+            </div>
+
+            <div class="grid-3" style="margin-top: 25px;">
+                <div class="media-card">
+                    <img src="results/trend_chart.png" alt="圖一: 特定時間內發生的加速度" onerror="this.src='https://via.placeholder.com/400x300?text=trend_chart.png'">
+                    <div class="media-label">圖一</div>
+                    <div class="media-desc">特定時間內發生的加速度變化歷史</div>
+                </div>
+                <div class="media-card">
+                    <img src="results/vector_3d_chart.png" alt="圖二: 最大合成加速度的合力方向" onerror="this.src='https://via.placeholder.com/400x300?text=vector_3d_chart.png'">
+                    <div class="media-label">圖二</div>
+                    <div class="media-desc">3D最大合成加速度之合力波形與方向</div>
+                </div>
+                <div class="media-card">
+                    <img src="results/未命名.png" alt="圖三: 監測出地震強度的能力" onerror="this.src='https://via.placeholder.com/400x300?text=未命名.png'">
+                    <div class="media-label">圖三</div>
+                    <div class="media-desc">Discord 觀測站強烈震動即時警報與烈震等級估算</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="videos" class="tab-panel">
+            <h2>影片結果展示</h2>
+            <p>以下為樹莓派感測器於實地測試中，晃動觸發、警報響起以及 Discord 即時推送通報的實際操作與示範影片。</p>
+
+            <div class="grid-2" style="margin-top: 25px;">
+                <div class="media-card">
+                    <video controls>
+                        <source src="video/9af0f7b0-ff20-4b93-bfdb-c236b2be918a.mp4" type="video/mp4">
+                        您的瀏覽器不支援播放此影片。
+                    </video>
+                    <div class="media-label">影片結果展示 一</div>
+                    <div class="media-desc">動態晃動測試與LED/蜂鳴器警報連動</div>
+                </div>
+                <div class="media-card">
+                    <video controls>
+                        <source src="video/abdc8735-dba1-47ec-bd87-5a23c7433095.mp4" type="video/mp4">
+                        您的瀏覽器不支援播放此影片。
+                    </video>
+                    <div class="media-label">影片結果展示 二</div>
+                    <div class="media-desc">邊緣運算即時觸發傳送至 Discord 測試</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // 頁籤切換 JavaScript 邏輯
+    function switchTab(event, tabId) {
+        // 隱藏所有面板
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(panel => panel.classList.remove('active'));
+
+        // 取消所有按鈕的 active 狀態
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        // 顯示被點選的面板，並啟動對應按鈕的 active 狀態
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+</script>
+
+</body>
+</html>
